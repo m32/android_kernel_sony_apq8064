@@ -320,8 +320,9 @@ int ion_system_heap_map_iommu(struct ion_buffer *buffer,
 
 	extra_iova_addr = data->iova_addr + buffer->size;
 	if (extra) {
-		ret = msm_iommu_map_extra(domain, extra_iova_addr, extra, SZ_4K,
-					  prot);
+		unsigned long phys_addr = sg_phys(table->sgl);
+		ret = msm_iommu_map_extra(domain, extra_iova_addr, phys_addr,
+					extra, SZ_4K, prot);
 		if (ret)
 			goto out2;
 	}
@@ -540,8 +541,9 @@ int ion_system_contig_heap_map_iommu(struct ion_buffer *buffer,
 
 	if (extra) {
 		unsigned long extra_iova_addr = data->iova_addr + buffer->size;
-		ret = msm_iommu_map_extra(domain, extra_iova_addr, extra, SZ_4K,
-					  prot);
+		unsigned long phys_addr = sg_phys(sglist);
+		ret = msm_iommu_map_extra(domain, extra_iova_addr, phys_addr,
+					extra, SZ_4K, prot);
 		if (ret)
 			goto out2;
 	}
