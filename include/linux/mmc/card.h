@@ -221,6 +221,7 @@ enum mmc_blk_status {
 	MMC_BLK_RETRY_SINGLE,
 	MMC_BLK_NEW_REQUEST,
 	MMC_BLK_URGENT,
+	MMC_BLK_URGENT_DONE,
 };
 
 struct mmc_wr_pack_stats {
