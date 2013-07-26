@@ -2844,4 +2844,10 @@ config MSM_MODEM_SUBSYSTEM_RESTART_MONITOR
 	  This option enables a module which can notify user-space
 	  applications of modem subsystem power up/down event via uevent.
 
+
+config HAS_MACH_MEMUTILS
+	default n
+	bool "Motorola MSM memcpy enhancements"
+	help
+	Faster memcpy performance for Krait
 endif
