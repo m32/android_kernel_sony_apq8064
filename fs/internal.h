@@ -100,6 +100,7 @@ extern long do_handle_open(int mountdirfd,
  * inode.c
  */
 extern spinlock_t inode_sb_list_lock;
+extern long prune_icache_sb(struct super_block *sb, unsigned long nr_to_scan);
 
 /*
  * fs-writeback.c
@@ -114,3 +115,4 @@ extern int invalidate_inodes(struct super_block *, bool);
  * dcache.c
  */
 extern struct dentry *__d_alloc(struct super_block *, const struct qstr *);
+extern long prune_dcache_sb(struct super_block *sb, unsigned long nr_to_scan);
