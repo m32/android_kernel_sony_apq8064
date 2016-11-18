@@ -145,13 +145,14 @@ static struct workqueue_struct *gserial_wq;
 #define GS_CLOSE_TIMEOUT		15		/* seconds */
 
 
-
+#ifndef pr_vdebug
 #ifdef VERBOSE_DEBUG
 #define pr_vdebug(fmt, arg...) \
 	pr_debug(fmt, ##arg)
 #else
 #define pr_vdebug(fmt, arg...) \
 	({ if (0) pr_debug(fmt, ##arg); })
+#endif
 #endif
 
 /*-------------------------------------------------------------------------*/

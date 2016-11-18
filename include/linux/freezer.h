@@ -43,24 +43,21 @@ extern void thaw_processes(void);
 extern void thaw_kernel_threads(void);
 
 /*
- * DO NOT ADD ANY NEW CALLERS OF THIS FUNCTION
- * If try_to_freeze causes a lockdep warning it means the caller may deadlock
- */
-static inline bool try_to_freeze_unsafe(void)
-{
-/* This causes problems for ARM targets and is a known
- * problem upstream.
- *	might_sleep();
- */
-	if (likely(!freezing(current)))
-		return false;
-	return __refrigerator(false);
-}
-/*
  * HACK: prevent sleeping while atomic warnings due to ARM signal handling
  * disabling irqs
  */
 static inline bool try_to_freeze_nowarn(void)
+{
+	if (likely(!freezing(current)))
+		return false;
+	return __refrigerator(false);
+}
+
+/*
+ * DO NOT ADD ANY NEW CALLERS OF THIS FUNCTION
+ * If try_to_freeze causes a lockdep warning it means the caller may deadlock
+ */
+static inline bool try_to_freeze_unsafe(void)
 {
 	if (likely(!freezing(current)))
 		return false;
@@ -314,6 +311,7 @@ static inline int freeze_kernel_threads(void) { return -ENOSYS; }
 static inline void thaw_processes(void) {}
 static inline void thaw_kernel_threads(void) {}
 
+static inline bool try_to_freeze_nowarn(void) { return false; }
 static inline bool try_to_freeze(void) { return false; }
 
 static inline void freezer_do_not_count(void) {}

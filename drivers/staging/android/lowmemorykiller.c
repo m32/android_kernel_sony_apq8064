@@ -33,6 +33,8 @@
  * Modifications are licensed under the License.
  */
 
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
 #define DEBUG_LOWMEMORYKILLER
 
 #ifdef CONFIG_NUMA
@@ -44,6 +46,7 @@
 #include <linux/mm.h>
 #include <linux/oom.h>
 #include <linux/sched.h>
+#include <linux/swap.h>
 #include <linux/rcupdate.h>
 #include <linux/notifier.h>
 #include <linux/swap.h>
@@ -52,7 +55,6 @@
 #include <linux/ktime.h>
 
 static uint32_t lowmem_debug_level = 1;
-
 static int lowmem_adj[6] = {
 	0,
 	1,
@@ -94,7 +96,7 @@ static ktime_t lowmem_deathpending_timeout;
 #define lowmem_print(level, x...)			\
 	do {						\
 		if (lowmem_debug_level >= (level))	\
-			printk(x);			\
+			pr_info(x);			\
 	} while (0)
 
 
@@ -154,6 +156,7 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	int tasksize;
 	int i;
 	int min_score_adj = OOM_SCORE_ADJ_MAX + 1;
+	int minfree = 0;
 	int selected_tasksize = 0;
 	int selected_oom_score_adj;
 	int array_size = ARRAY_SIZE(lowmem_adj);
@@ -220,7 +223,8 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 				   lowmem_minfree[i],
 				   lowmem_minfree[i]/zone_normal_minfree_ratio);
 
-		if (other_free + other_file < lowmem_minfree[i]) {
+		minfree = lowmem_minfree[i];
+		if (other_free < minfree && other_file < minfree) {
 			min_score_adj = lowmem_adj[i];
 			reason = TRIGGER_ALL_MEM;
 			break;
@@ -348,12 +352,18 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	}
 	if (selected) {
 		send_sig(SIGKILL, selected, 0);
-		lowmem_print(1, "send sigkill to %d (%s), adj %d, size %d,"\
-			     " from %d (%s), trigger: %d\n",
-			     selected->pid, selected->comm,
-			     selected_oom_score_adj, selected_tasksize,
-			     current->pid, current->comm, reason);
-
+		lowmem_print(1, "Killing '%s' (%d), adj %d,\n" \
+				"   to free %ldkB on behalf of '%s' (%d) because\n" \
+				"   cache %ldkB is below limit %ldkB for oom_score_adj %d\n" \
+				"   Free memory is %ldkB above reserved\n",
+			     selected->comm, selected->pid,
+			     selected_oom_score_adj,
+			     selected_tasksize * (long)(PAGE_SIZE / 1024),
+			     current->comm, current->pid,
+			     other_file * (long)(PAGE_SIZE / 1024),
+			     minfree * (long)(PAGE_SIZE / 1024),
+			     min_score_adj,
+			     other_free * (long)(PAGE_SIZE / 1024));
 		lowmem_deathpending_timeout = ktime_add_ns(ktime_get(),
 							   NSEC_PER_SEC/2);
 		lowmem_print(2, "state:%ld flag:0x%x %d\n",

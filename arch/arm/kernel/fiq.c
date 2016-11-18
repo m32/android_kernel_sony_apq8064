@@ -151,5 +151,6 @@ void __init init_FIQ(int start)
 {
 	unsigned offset = FIQ_OFFSET;
 	no_fiq_insn = *(unsigned long *)(0xffff0000 + offset);
+
 	fiq_start = start;
 }
